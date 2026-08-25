@@ -6,6 +6,7 @@ Numeração automática: NN_semanaX_diaY_tema.ipynb em ordem global.
 import importlib
 import json
 import os
+import re
 import sys
 
 TOOLS = os.path.dirname(os.path.abspath(__file__))
@@ -16,10 +17,20 @@ OUT = os.path.join(ROOT, "notebooks")
 
 def main():
     sys.path.insert(0, TOOLS)
+    # limpar notebooks antigos (numeração pode ter mudado)
+    for f in os.listdir(OUT):
+        if f.endswith(".ipynb"):
+            os.remove(os.path.join(OUT, f))
     os.makedirs(OUT, exist_ok=True)
     total = 0
     counter = 0
-    files = sorted(f for f in os.listdir(SPECS) if f.endswith(".py") and f != "__init__.py")
+    files = sorted(
+        (f for f in os.listdir(SPECS) if f.endswith(".py") and f != "__init__.py"),
+        key=lambda fn: (
+            int(re.search(r"semana(\d+)", fn).group(1)) if re.search(r"semana(\d+)", fn) else 999,
+            fn,
+        ),
+    )
     for fn in files:
         mod = importlib.import_module(f"specs.{fn[:-3]}")
         for name, cells in mod.NOTEBOOKS:
